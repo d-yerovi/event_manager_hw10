@@ -15,7 +15,7 @@ Fixtures:
 
 # Standard library imports
 from builtins import range
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -36,16 +36,23 @@ from app.utils.security import hash_password
 from app.utils.template_manager import TemplateManager
 from app.services.email_service import EmailService
 from app.services.jwt_service import create_access_token
+import uuid
 
+# Initialize Faker for generating random user data
 fake = Faker()
 
+# Get application settings
 settings = get_settings()
+# Replace database URL for testing purposes
 TEST_DATABASE_URL = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
+# Create an asynchronous engine for the test database
 engine = create_async_engine(TEST_DATABASE_URL, echo=settings.debug)
+# Create a session factory for the asynchronous session
 AsyncTestingSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+# Create a scoped session for the asynchronous session
 AsyncSessionScoped = scoped_session(AsyncTestingSessionLocal)
 
-
+# Fixture for email service
 @pytest.fixture
 def email_service():
     # Assuming the TemplateManager does not need any arguments for initialization
@@ -53,8 +60,7 @@ def email_service():
     email_service = EmailService(template_manager=template_manager)
     return email_service
 
-
-# this is what creates the http client for your api tests
+# Fixture to create an asynchronous HTTP client for API tests
 @pytest.fixture(scope="function")
 async def async_client(db_session):
     async with AsyncClient(app=app, base_url="http://testserver") as client:
@@ -64,6 +70,7 @@ async def async_client(db_session):
         finally:
             app.dependency_overrides.clear()
 
+# Fixture to initialize the database at the session start
 @pytest.fixture(scope="session", autouse=True)
 def initialize_database():
     try:
@@ -71,17 +78,18 @@ def initialize_database():
     except Exception as e:
         pytest.fail(f"Failed to initialize the database: {str(e)}")
 
-# this function setup and tears down (drops tales) for each test function, so you have a clean database for each test.
+# Fixture to set up and tear down the database for each test function
 @pytest.fixture(scope="function", autouse=True)
 async def setup_database():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
-        # you can comment out this line during development if you are debugging a single test
-         await conn.run_sync(Base.metadata.drop_all)
+        # You can comment out this line during development if you are debugging a single test
+        await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
+# Fixture to create a database session for each test function
 @pytest.fixture(scope="function")
 async def db_session(setup_database):
     async with AsyncSessionScoped() as session:
@@ -90,6 +98,7 @@ async def db_session(setup_database):
         finally:
             await session.close()
 
+# Fixture to create a locked user for testing
 @pytest.fixture(scope="function")
 async def locked_user(db_session):
     unique_email = fake.email()
@@ -109,6 +118,7 @@ async def locked_user(db_session):
     await db_session.commit()
     return user
 
+# Fixture to create a regular user for testing
 @pytest.fixture(scope="function")
 async def user(db_session):
     user_data = {
@@ -126,6 +136,7 @@ async def user(db_session):
     await db_session.commit()
     return user
 
+# Fixture to create a verified user for testing
 @pytest.fixture(scope="function")
 async def verified_user(db_session):
     user_data = {
@@ -143,6 +154,7 @@ async def verified_user(db_session):
     await db_session.commit()
     return user
 
+# Fixture to create an unverified user for testing
 @pytest.fixture(scope="function")
 async def unverified_user(db_session):
     user_data = {
@@ -160,6 +172,7 @@ async def unverified_user(db_session):
     await db_session.commit()
     return user
 
+# Fixture to create 50 users with the same role for testing
 @pytest.fixture(scope="function")
 async def users_with_same_role_50_users(db_session):
     users = []
@@ -180,6 +193,7 @@ async def users_with_same_role_50_users(db_session):
     await db_session.commit()
     return users
 
+# Fixture to create an admin user for testing
 @pytest.fixture
 async def admin_user(db_session: AsyncSession):
     user = User(
@@ -195,6 +209,7 @@ async def admin_user(db_session: AsyncSession):
     await db_session.commit()
     return user
 
+# Fixture to create a manager user for testing
 @pytest.fixture
 async def manager_user(db_session: AsyncSession):
     user = User(
@@ -210,7 +225,6 @@ async def manager_user(db_session: AsyncSession):
     await db_session.commit()
     return user
 
-
 # Fixtures for common test data
 @pytest.fixture
 def user_base_data():
@@ -219,45 +233,110 @@ def user_base_data():
         "email": "john.doe@example.com",
         "full_name": "John Doe",
         "bio": "I am a software engineer with over 5 years of experience.",
-        "profile_picture_url": "https://example.com/profile_pictures/john_doe.jpg"
+        "profile_picture_url": "https://example.com/profile_pictures/john_doe.jpg",
+        "nickname": "jd_123_example"
     }
 
+# Fixture for invalid user data
 @pytest.fixture
 def user_base_data_invalid():
     return {
         "username": "john_doe_123",
-        "email": "john.doe.example.com",
+        "email": "john.doe.example.com",  # Invalid email
         "full_name": "John Doe",
         "bio": "I am a software engineer with over 5 years of experience.",
         "profile_picture_url": "https://example.com/profile_pictures/john_doe.jpg"
     }
 
-
+# Fixture for creating a user
 @pytest.fixture
 def user_create_data(user_base_data):
     return {**user_base_data, "password": "SecurePassword123!"}
 
+# Fixture for updating user data
 @pytest.fixture
 def user_update_data():
     return {
         "email": "john.doe.new@example.com",
-        "full_name": "John H. Doe",
         "bio": "I specialize in backend development with Python and Node.js.",
-        "profile_picture_url": "https://example.com/profile_pictures/john_doe_updated.jpg"
+        "profile_picture_url": "https://example.com/profile_pictures/john_doe_updated.jpg",
+        "nickname": "jd_123_new_example",
+        "first_name": "John",
+        "last_name": "Doe"
     }
 
+# Fixture for user response data
 @pytest.fixture
 def user_response_data():
     return {
-        "id": "unique-id-string",
-        "username": "testuser",
+        "id": str(uuid.uuid4()),
+        "nickname": "testuser",
         "email": "test@example.com",
         "last_login_at": datetime.now(),
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
-        "links": []
+        "links": [],
+        "first_name": "John",
+        "last_name": "Doe"
     }
 
+# Fixture for login request data
 @pytest.fixture
 def login_request_data():
-    return {"username": "john_doe_123", "password": "SecurePassword123!"}
+    return {"email": "john.doe.new@example.com", "password": "SecurePassword123!"}
+
+# Fixture to create a user token for testing
+@pytest.fixture
+async def user_token(db_session: AsyncSession, user: User):
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    token = create_access_token(
+        data={"sub": user.email, "role": str(user.role)}, 
+        expires_delta=access_token_expires
+    )
+    return token
+
+# Fixture to create an admin token for testing
+@pytest.fixture
+async def admin_token(db_session: AsyncSession, admin_user: User):
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    token = create_access_token(
+        data={"sub": admin_user.email, "role": str(admin_user.role)}, 
+        expires_delta=access_token_expires
+    )
+    return token
+
+# Fixture to create a manager token for testing
+@pytest.fixture
+async def manager_token(db_session: AsyncSession, manager_user: User):
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    token = create_access_token(
+        data={"sub": manager_user.email, "role": str(UserRole.MANAGER)}, 
+        expires_delta=access_token_expires
+    )
+    return token
+
+# Fixture to create a different admin user for testing
+@pytest.fixture
+async def different_admin_user(db_session: AsyncSession):
+    user = User(
+        nickname="different_admin_user",
+        email="different_admin@example.com",
+        first_name="Different",
+        last_name="Admin",
+        hashed_password="securepassword",
+        role=UserRole.ADMIN,
+        is_locked=False,
+    )
+    db_session.add(user)
+    await db_session.commit()
+    return user
+
+# Fixture to create a new admin token for testing
+@pytest.fixture
+async def new_admin_token(db_session: AsyncSession, different_admin_user: User):
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    token = create_access_token(
+        data={"sub": different_admin_user.email, "role": UserRole.ADMIN.name},
+        expires_delta=access_token_expires
+    )
+    return token
