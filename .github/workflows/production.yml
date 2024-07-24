@@ -51,10 +51,10 @@ jobs:
 
       - name: Debug Environment Variables
         run: |
-          echo "SMTP_SERVER: $SMTP_SERVER"
-          echo "SMTP_PORT: $SMTP_PORT"
-          echo "SMTP_USERNAME: $SMTP_USERNAME"
-          echo "SMTP_PASSWORD: $SMTP_PASSWORD"
+          echo "SMTP_SERVER: sandbox.smtp.mailtrap.io"
+          echo "SMTP_PORT: 2525"
+          echo "SMTP_USERNAME: ff61a752e2b156"
+          echo "SMTP_PASSWORD: 0d4be6ae1366f9"
         env:
           SMTP_SERVER: sandbox.smtp.mailtrap.io
           SMTP_PORT: 2525
@@ -63,10 +63,10 @@ jobs:
 
       - name: Create .env file
         run: |
-          echo "smtp_server=$SMTP_SERVER" >> .env
-          echo "smtp_port=$SMTP_PORT" >> .env
-          echo "smtp_username=$SMTP_USERNAME" >> .env
-          echo "smtp_password=$SMTP_PASSWORD" >> .env
+          echo "smtp_server=sandbox.smtp.mailtrap.io" >> .env
+          echo "smtp_port=2525" >> .env
+          echo "smtp_username=ff61a752e2b156" >> .env
+          echo "smtp_password=0d4be6ae1366f9" >> .env
         env:
           SMTP_SERVER: sandbox.smtp.mailtrap.io
           SMTP_PORT: 2525
