@@ -56,10 +56,10 @@ jobs:
           echo "SMTP_USERNAME: $SMTP_USERNAME"
           echo "SMTP_PASSWORD: $SMTP_PASSWORD"
         env:
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SERVER: sandbox.smtp.mailtrap.io
+          SMTP_PORT: 2525
+          SMTP_USERNAME: ff61a752e2b156
+          SMTP_PASSWORD: 0d4be6ae1366f9
 
       - name: Create .env file
         run: |
@@ -68,10 +68,10 @@ jobs:
           echo "smtp_username=$SMTP_USERNAME" >> .env
           echo "smtp_password=$SMTP_PASSWORD" >> .env
         env:
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_SERVER: sandbox.smtp.mailtrap.io
+          SMTP_PORT: 2525
+          SMTP_USERNAME: ff61a752e2b156
+          SMTP_PASSWORD: 0d4be6ae1366f9
 
       - name: Run tests with Pytest
         env:
